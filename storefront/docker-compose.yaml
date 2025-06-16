@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  mall_nginx:
+    image: nginx:alpine
+    container_name: mall_nginx
+    restart: no
+    build:
+      context: ..
+      dockerfile: storefront/nginx/Dockerfile
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/ssl:/usr/share/nginx/ssl

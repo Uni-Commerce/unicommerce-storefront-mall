@@ -1,0 +1,241 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("NEST_APP_DATABASE_URL")
+}
+
+enum SmtpProtocol {
+  ssl
+  tls
+}
+
+enum AdminRole {
+  ADMIN
+  SYSTEM
+  OPERATION
+}
+
+enum UrlKeyType {
+  CATEGORY
+  CMS
+  PRODUCT
+  BLOG_CATEGORY
+  BLOG_POST
+}
+
+enum RedirectType {
+  PERMANENT @map("301")
+  TEMPORARY @map("302")
+}
+
+enum BlogPostStatus {
+  
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EmailType {
+  CREATE_ACCOUNT
+  DELETE_ACCOUNT
+  DELETE_USER
+  APPROVE_BLOG_POST
+  REJECT_BLOG_POST
+  RESET_PASSWORD
+  OTHER
+}
+
+enum TargetType {
+  self
+  blank
+  parent
+  top
+}
+
+
+model ApiLogger {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  ip                    String           @db.VarChar(55)
+  method                String           @db.VarChar(55)
+  url                   String           @db.VarChar(255)
+  userAgent             String?          @db.VarChar(500)
+  body                  Json             @db.Json @default("{}")
+  params                Json             @db.Json @default("{}")
+  query                 Json             @db.Json @default("{}")
+  time                  String           @db.VarChar(255) @default("")
+  @@map("api_logger")
+}
+
+model EmailConfig {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  host                  String           @db.VarChar(55)
+  port                  Int              @db.Integer
+  hostUser              String           @unique @db.VarChar(55)
+  hostPassword          String           @db.VarChar(150)
+  from                  String           @db.VarChar(55)
+  protocol              SmtpProtocol     @default(tls)
+  secure                Boolean?         @db.Boolean @default(true)
+  preview               Boolean?         @db.Boolean @default(false)
+  @@map("email_config")
+}
+
+model EmailTemplate {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  type                  EmailType?       @unique @default(CREATE_ACCOUNT)
+  from                  String           @db.VarChar(120)
+  subject               String           @db.VarChar(500)
+  context               Json             @db.Json @default("{}")
+  template              String?          @db.VarChar(150)
+  html                  String?          @db.Text
+  disabled              Boolean          @db.Boolean @default(false)
+  @@map("email_template")
+}
+
+model EmailLogger {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  type                  EmailType        @default(CREATE_ACCOUNT)
+  to                    String           @db.VarChar(150)
+  from                  String           @db.VarChar(150)
+  subject               String           @db.VarChar(500)
+  @@map("email_logger")
+}
+
+model SystemLog {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  ip                    String           @db.VarChar(55)
+  url                   String           @db.VarChar(255)
+  userAgent             String?          @db.VarChar(500)
+  region                String?          @db.VarChar(255)
+  adminId               BigInt?
+  admin                 Admin?           @relation(fields: [adminId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  @@map("system_log")
+}
+
+model Admin {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  name                  String           @db.VarChar(150)
+  email                 String           @unique @db.VarChar(254)
+  password              String           @db.VarChar(150)
+  telephone             String           @db.VarChar(120)
+  role                  AdminRole        @default(OPERATION)
+  disabled              Boolean          @db.Boolean @default(false)
+  lastLoginAt           DateTime?        @db.Timestamptz(6)
+  systemLogs            SystemLog[]
+  @@index([email])
+  @@map("admin")
+}
+
+model User {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  name                  String           @db.VarChar(150)
+  email                 String           @db.VarChar(254)
+  password              String?          @db.VarChar(150)
+  telephone             String           @db.VarChar(120)
+  lastLoginAt           DateTime?        @db.Timestamptz(6)
+  disabled              Boolean          @db.Boolean @default(false)
+  removed               Boolean          @db.Boolean @default(false)
+  subscribed            Boolean?         @db.Boolean @default(true)
+  discription           String?          @db.Text
+  @@index([email, telephone])
+  @@unique([email, telephone])
+  @@map("user")
+}
+
+model Region {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  code                  String           @unique @db.VarChar(55)
+  name                  String           @db.VarChar(150)
+  level                 Int              @db.Integer // 1-省 2-市 3-县区
+  disabled              Boolean          @db.Boolean @default(false)
+  parentId              BigInt?          @db.BigInt
+  parent                Region?          @relation("RegionToRegion", fields: [parentId], references: [id])
+  children              Region[]         @relation("RegionToRegion") 
+  @@map("region")
+}
+
+model UrlKey {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  url                   String           @unique @db.VarChar(150)
+  disabled              Boolean          @default(false)
+  type                  UrlKeyType       @default(PRODUCT) // URL类型
+  typeId                BigInt           // 关联的ID
+  redirectUrl           String?          @db.VarChar(150) // 重定向的URL
+  redirectType          RedirectType?          
+  @@index([url])
+  @@unique([type, typeId])
+  @@map("url_key")
+}
+
+model Category {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  name                  String           @db.VarChar(150)
+  image                 String?          @db.VarChar(255)
+  description           String?          @db.Text
+  level                 Int              @db.Integer @default(1)
+  urlKey                String           @unique @db.VarChar(150)// 用于URL的友好标识
+  disabled              Boolean          @default(false)
+  metaTitle             String?          @db.VarChar(150)
+  metaKeywords          String?          @db.VarChar(200)
+  metaDescription       String?          @db.VarChar(255)
+  parentId              BigInt?
+  parent                Category?        @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children              Category[]       @relation("CategoryHierarchy")
+  @@index([urlKey])
+  @@map("category")
+}
+
+model Banner {
+  id                  BigInt             @id @default(autoincrement())
+  createdAt           DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  disabled            Boolean            @db.Boolean @default(false)
+  url                 String             @unique @db.VarChar(150)
+  image               String             @db.VarChar(255)
+  description         String?            @db.Text
+  target              TargetType?        @default(self)
+  startDate           DateTime           @db.Timestamptz(6)
+  endDate             DateTime           @db.Timestamptz(6)
+  @@index([url])
+  @@map("banner")
+}
+
+model CmsPage {
+  id                  BigInt             @id @default(autoincrement())
+  createdAt           DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  disabled            Boolean            @db.Boolean @default(false)
+  url                 String             @unique @db.VarChar(150)
+  title               String             @db.VarChar(150)
+  description         String?            @db.Text
+  metaTitle           String?            @db.VarChar(150)
+  metaKeywords        String?            @db.VarChar(200)
+  metaDescription     String?            @db.VarChar(255)
+  @@index([url])
+  @@map("cms_page")
+}

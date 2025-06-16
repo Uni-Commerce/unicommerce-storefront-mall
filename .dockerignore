@@ -1,0 +1,16 @@
+.git
+*.md
+dist
+.husky
+.vscode
+node_modules
+.editorconfig
+.eslintignore
+.gitignore
+.lintstagedrc
+.prettierrc.js
+eslint.config.mjs
+**/**/.env.local
+apps/frontend/*
+apps/regions/*
+turbo.json

@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Create User Notify</title>
+  </head>
+  <body>
+    <div
+      style="
+        margin-top: -8px;
+        margin-right: -8px;
+        margin-left: -8px;
+        margin-bottom: 0;
+        padding-top: 38px;
+        padding-bottom: 38px;
+        padding-left: 0;
+        padding-right: 0;
+        background-color: rgb(240, 242, 245);
+      "
+    >
+      <table
+        align="center"
+        border="0"
+        cellspacing="0"
+        cellpadding="0"
+        width="100%"
+        bgcolor="#EDF0F3"
+        style="height: 100px; table-layout: fixed; font-family: PingFangSC-Light, serif"
+      >
+        <tbody>
+          <tr>
+            <td>
+              <table
+                width="100%"
+                border="0"
+                cellspacing="0"
+                cellpadding="0"
+                style="max-width: 600px; margin: 0 auto"
+              >
+                <tbody>
+                  <tr>
+                    <td align="center">
+                      <h2
+                        style="
+                          font-size: 30px;
+                          color: #3c4858;
+                          letter-spacing: 0;
+                          margin: 6px auto;
+                          padding-left: 5px;
+                        "
+                      >
+                        I18n Locale Manager
+                      </h2>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <table
+                        border="0"
+                        width="100%"
+                        cellspacing="0"
+                        cellpadding="0"
+                        style="
+                          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+                          color: #273444;
+                          background: #fff;
+                          border-radius: 4px;
+                          margin-top: 18px;
+                        "
+                      >
+                        <tbody>
+                          <tr>
+                            <td
+                              colspan="4"
+                              style="border-top-left-radius: 4px; border-top-right-radius: 4px"
+                            >
+                              <table border="0" width="100%" cellspacing="0" cellpadding="0">
+                                <tbody>
+                                  <tr>
+                                    <td
+                                      style="
+                                        border-top-left-radius: 4px;
+                                        border-top-right-radius: 4px;
+                                      "
+                                    >
+                                      <table
+                                        border="0"
+                                        width="100%"
+                                        cellspacing="0"
+                                        cellpadding="0"
+                                        style="
+                                          width: 100%;
+                                          background: #fff;
+                                          padding: 40px;
+                                          border-top-left-radius: 4px;
+                                          border-top-right-radius: 4px;
+                                        "
+                                      >
+                                        <tbody>
+                                          <tr>
+                                            <td>
+                                              <div style="margin: 10px 0; font-size: 16px">
+                                                Hi, <%= locals.name %>:
+                                              </div>
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td width="100%">
+                                              <div
+                                                style="
+                                                  margin-top: 10px;
+                                                  font-size: 14px;
+                                                  line-height: 1.6;
+                                                "
+                                              >
+                                                Welcome to our team
+                                              </div>
+                                              <div style="font-size: 14px; line-height: 1.6">
+                                                Account: <%= locals.email %>
+                                              </div>
+                                              <div style="font-size: 14px; line-height: 1.6">
+                                                Your password: <%= locals.password %>
+                                              </div>
+                                              <div style="font-size: 14px; line-height: 1.6">
+                                                Reset password if you need:
+                                                <a
+                                                  style="color: #4289dc"
+                                                  href="<%= locals.reset_password_url %>"
+                                                >
+                                                  reset password link
+                                                </a>
+                                                .
+                                              </div>
+                                              <div
+                                                style="
+                                                  margin-bottom: 10px;
+                                                  font-size: 14px;
+                                                  line-height: 1.6;
+                                                "
+                                              >
+                                                If you weren't expecting this invitation, you can
+                                                ignore.
+                                              </div>
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>
+                                              <span
+                                                style="
+                                                  margin: 10px 0;
+                                                  border-bottom: 1px solid #e0e6ed;
+                                                  width: 150px;
+                                                  height: 0;
+                                                  display: inline-block;
+                                                "
+                                              ></span>
+                                            </td>
+                                          </tr>
+                                        </tbody>
+                                      </table>
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

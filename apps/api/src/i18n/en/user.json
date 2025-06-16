@@ -1,0 +1,10 @@
+{
+  "notFound": "No user found for email: {email}",
+  "notExsistAccount": "{telephone} user is not exsist.",
+  "invalidPassword": "The password is not valid.",
+  "telephoneExisted": "The telephone: {telephone} is already registered.",
+  "locked": "User account is locked, please contact admin.",
+  "notExsist": "User is not exsist.",
+  "samePassword": "New password cannot be the same as the old password",
+  "confirmPassword": "New password and confirm password do not match"
+}

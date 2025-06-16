@@ -1,0 +1,22 @@
+{
+  "global.email": "邮箱地址",
+  "global.password": "密码",
+  "global.forgotPassword": "忘记密码?",
+  "global.login": "登录",
+  "global.platform": "Unimall Admin",
+  "global.required": "此字段是必填信息",
+  "global.browser": "建议浏览器",
+  "global.submit": "提交",
+  "global.save": "保存",
+  "global.backLogin": "返回登录",
+  "global.confirm": "您确认要删除此记录吗？",
+  "global.cancel": "取消",
+  "global.ok": "确定",
+  "global.validator.email": "请输入有效的电子邮件地址（例如: johndoe@domain.com).",
+  "global.validator.password": "密码必须至少包含以下{number}: 小写、大写、数字、特殊字符.",
+  "global.validator.passLenth": "密码中不同类别字符的最小值为{number}.",
+  "global.validator.json": "请填写标准JSON格式的数据.",
+  "global.validator.newPassword": "新密码不能与旧密码相同",
+  "global.validator.confirmPassword": "确认密码必须与新密码相同",
+  "global.validator.telephone": "请输入正确的手机号码格式"
+}

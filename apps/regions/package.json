@@ -1,0 +1,20 @@
+{
+  "name": "@unicommerce/regions",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "ts-node index.ts",
+    "convert": "ts-node convert.ts"
+  },
+  "dependencies": {
+    "@unicommerce/ts-config": "^0.1.0",
+    "axios": "^1.8.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "@unicommerce/eslint-config": "^0.5.0",
+    "eslint": "^9.22.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.8.2"
+  }
+}

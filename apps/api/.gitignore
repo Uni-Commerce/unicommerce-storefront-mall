@@ -1,0 +1,22 @@
+node_modules
+# Keep environment variables out of version control
+.env
+logs
+# profile upload directory
+!public/upload/profile
+public/upload/profile/*
+# company upload directory
+!public/upload/company
+public/upload/company/*
+# store upload directory
+!public/upload/store
+public/upload/store/*
+# banner upload directory
+!public/upload/banner
+public/upload/banner/*
+# category upload directory
+!public/upload/category
+public/upload/category/*
+# post upload directory
+!public/upload/post
+public/upload/post/*

@@ -1,0 +1,10 @@
+{
+  "notFound": "邮箱: {email}账户不存在.",
+  "notExsistAccount": "{telephone}账户不存在.",
+  "invalidPassword": "密码验证错误",
+  "telephoneExisted": "手机号: {telephone}已经注册过了.",
+  "locked": "该账户被锁定, 请联系管理员.",
+  "notExsist": "该用户不存在.",
+  "samePassword": "新密码不能与旧密码相同.",
+  "confirmPassword": "确认密码和新密码不一致."
+}

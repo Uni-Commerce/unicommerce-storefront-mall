@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  mall_postgres:
+    image: postgres:14.11
+    container_name: mall_postgres
+    restart: no
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - TZ=Asia/Shanghai
+    volumes:
+      - 'postgres_data:/var/lib/postgresql/data/pgdata'
+      - './init.sql:/docker-entrypoint-initdb.d/init.sql'
+    ports:
+      - 5432:5432
+    networks:
+      - mall-network
+    # 添加的日志限制配置
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m' # 每个日志文件最大10MB
+        max-file: '3' # 最多保留3个日志文件
+
+  mall_redis:
+    image: redis:7.2-alpine
+    container_name: mall_redis
+    restart: no
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - 'redis_data:/data'
+    ports:
+      - 6379:6379
+    command: redis-server --requirepass mall_redis --appendonly yes
+    networks:
+      - mall-network
+
+  mall_backend:
+    build:
+      context: ..
+      dockerfile: mall/Dockerfile
+    container_name: mall_backend
+    restart: always
+    ports:
+      - 8000:8000
+    environment:
+      - NEST_APP_DATABASE_URL=postgresql://postgres:postgres@mall_postgres:5432/mall?schema=public
+    depends_on:
+      - mall_redis
+    networks:
+      - mall-network
+
+  mall_nginx:
+    image: nginx:alpine
+    container_name: mall_nginx
+    restart: no
+    build:
+      context: ..
+      dockerfile: mall/nginx/Dockerfile
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/ssl:/usr/share/nginx/ssl
+      - ../apps/admin/build:/usr/share/nginx/html
+    depends_on:
+      - mall_postgres
+      - mall_backend
+    networks:
+      - mall-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  mall-network:
+    driver: bridge

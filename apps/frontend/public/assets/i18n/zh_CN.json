@@ -1,0 +1,11 @@
+{
+  "global.home": "首页",
+  "global.login": "登录",
+  "global.register": "注册",
+  "global.status": "状态",
+  "global.required": "此字段是必填项",
+  "global.startDate": "开始日期",
+  "global.endDate": "结束日期",
+  "global.edit": "编辑",
+  "global.confirm": "您确认要删除此记录吗？"
+}

@@ -1,0 +1,9 @@
+{
+  "extends": "@unicommerce/ts-config/nestjs.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": "./"
+  },
+  "include": ["./src/**/*.ts", "regions/*.ts"],
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+}

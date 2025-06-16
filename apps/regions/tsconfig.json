@@ -1,0 +1,13 @@
+{
+  "extends": "@unicommerce/ts-config/base.json",
+  "compilerOptions": {
+    "target": "ES2015",
+    "resolveJsonModule": true,
+    "paths": {
+      "@/*": ["./*"],
+      "~/*": ["./*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}

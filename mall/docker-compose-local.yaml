@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  mall_postgres:
+    image: postgres:14.11
+    container_name: mall_postgres
+    restart: no
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - TZ=Asia/Shanghai
+    volumes:
+      - '/Users/luolan/Docker/mall:/var/lib/postgresql/data'
+      - './init.sql:/docker-entrypoint-initdb.d/init.sql'
+    ports:
+      - 5432:5432
+    networks:
+      - mall_network
+
+  mall_redis:
+    image: redis:7.2-alpine
+    container_name: mall_redis
+    restart: no
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - '/Users/luolan/Docker/mall/redis:/data'
+    ports:
+      - 6379:6379
+    command: redis-server --requirepass mall_redis --appendonly yes
+    networks:
+      - mall_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  mall_network:
+    driver: bridge
