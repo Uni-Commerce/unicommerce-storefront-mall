@@ -73,6 +73,11 @@ enum ProductImageRole {
   GALLERY
 }
 
+enum Gender {
+  MALE
+  FEMALE
+}
+
 model Region {
   id                    BigInt           @id @default(autoincrement())
   createdAt             DateTime         @default(now()) @db.Timestamptz(6)
@@ -116,7 +121,9 @@ model Store {
   storeThemeId          BigInt?          @unique
   storeTheme            StoreTheme?      @relation(fields: [storeThemeId], references: [id])
   cmsPages              CmsPage[]
+  cmsBlocks             CmsBlock[]
   sliders               Slider[]
+  currencies            StoreCurrency[]
   @@map("store")
 }
 
@@ -155,6 +162,33 @@ model StoreTheme {
   cmsHomePage           CmsPage?         @relation(fields: [cmsHomePageId], references: [id])
   store                 Store?
   @@map("store_theme")
+}
+
+model StoreCurrency {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  isBase                Boolean          @default(false) // 是否为基础货币
+  isDefault             Boolean          @default(false) // 是否为默认货币
+  storeId               BigInt
+  store                 Store            @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  currencyId            BigInt
+  currency              Currency         @relation(fields: [currencyId], references: [id], onDelete: Cascade)
+  @@unique([storeId, currencyId])
+  @@map("store_currency") 
+}
+
+model Currency {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  code                  String           @unique @db.VarChar(10) // 货币代码
+  name                  String           @db.VarChar(50) // 货币名称
+  symbol                String           @db.VarChar(10) // 货币符号
+  rate                  Decimal          @db.Decimal(10, 4) // 汇率
+  disabled              Boolean          @default(false)
+  stores                StoreCurrency[]
+  @@map("currency")
 }
 
 model Category {
@@ -315,6 +349,8 @@ model CmsBlock {
   content               String?          @db.Text
   cmsPageId             BigInt?
   cmsPage               CmsPage?         @relation(fields: [cmsPageId], references: [id])
+  storeId               BigInt?            @unique
+  store                 Store?             @relation(fields: [storeId], references: [id])
   categories            Category[]
   @@index([urlKey])
   @@map("cms_block")
@@ -324,13 +360,17 @@ model User {
   id                    BigInt           @id @default(autoincrement())
   createdAt             DateTime         @default(now()) @db.Timestamptz(6)
   updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
-  name                  String           @db.VarChar(150)
+  fristName             String           @db.VarChar(100)
+  lastName              String           @db.VarChar(100)
   email                 String           @db.VarChar(254)
   password              String?          @db.VarChar(150)
   telephone             String           @db.VarChar(120)
-  lastLoginAt           DateTime?        @db.Timestamptz(6)
   disabled              Boolean          @db.Boolean @default(false)
+  allowRemote           Boolean?         @db.Boolean @default(false)
   subscribed            Boolean?         @db.Boolean @default(true)
+  gender                Gender?          @default(MALE)
+  birthday              DateTime?        @db.Timestamptz(6)
+  lastLoginAt           DateTime?        @db.Timestamptz(6)
   discription           String?          @db.Text
   @@index([email])
   @@unique([email])
