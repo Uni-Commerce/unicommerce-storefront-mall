@@ -37,13 +37,6 @@ enum RedirectType {
   TEMPORARY @map("302")
 }
 
-enum BlogPostStatus {
-  
-  PENDING
-  APPROVED
-  REJECTED
-}
-
 enum EmailType {
   CREATE_ACCOUNT
   DELETE_ACCOUNT
@@ -61,6 +54,304 @@ enum TargetType {
   top
 }
 
+enum BlogPostStatus {
+  UNVERIFIED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum StockStatus {
+  IN_STOCK
+  OUT_OF_STOCK
+}
+
+enum ProductImageRole {
+  BASE
+  SMALL
+  THUMBNAIL
+  GALLERY
+}
+
+model Region {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  code                  String           @unique @db.VarChar(55)
+  name                  String           @db.VarChar(150)
+  level                 Int              @db.Integer // 1-省 2-市 3-县区
+  disabled              Boolean          @db.Boolean @default(false)
+  parentId              BigInt?          @db.BigInt
+  parent                Region?          @relation("RegionToRegion", fields: [parentId], references: [id])
+  children              Region[]         @relation("RegionToRegion") 
+  @@map("region")
+}
+
+model UrlKey {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  url                   String           @unique @db.VarChar(150)
+  disabled              Boolean          @default(false)
+  type                  UrlKeyType       @default(PRODUCT) // URL类型
+  typeId                BigInt           // 关联的ID
+  redirectUrl           String?          @db.VarChar(150) // 重定向的URL
+  redirectType          RedirectType?          
+  @@index([url])
+  @@unique([type, typeId])
+  @@map("url_key")
+}
+
+model Store {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  code                  String           @unique @db.VarChar(150)
+  name                  String           @db.VarChar(255)
+  disabled              Boolean          @db.Boolean @default(false)
+  rootCategoryId        BigInt?          @unique
+  category              Category?        @relation(fields: [rootCategoryId], references: [id])
+  storeConfigId         BigInt?          @unique
+  storeConfig           StoreConfig?     @relation(fields: [storeConfigId], references: [id])
+  storeThemeId          BigInt?          @unique
+  storeTheme            StoreTheme?      @relation(fields: [storeThemeId], references: [id])
+  cmsPages              CmsPage[]
+  sliders               Slider[]
+  @@map("store")
+}
+
+model StoreConfig {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  countryId             BigInt?
+  locale                String?          @db.VarChar(150)
+  storeName             String?          @db.VarChar(255)
+  storePhone            String?          @db.VarChar(120)
+  store                 Store?
+  @@map("store_config")
+}
+
+model StoreTheme {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  locale                String           @db.VarChar(150) // 主题语言
+  favicon               String?          @db.VarChar(255) // 网站图标
+  pageTitle             String?          @db.VarChar(150) // 页面标题
+  pagePrefix            String?          @db.VarChar(150) // 页面前缀
+  pageSuffix            String?          @db.VarChar(150) // 页面后缀
+  metaTitle             String?          @db.VarChar(150) // 元数据标题
+  metaKeywords          String?          @db.VarChar(200) // 元数据关键词
+  metaDescription       String?          @db.VarChar(255) // 元数据描述
+  logo                  String?          @db.VarChar(255) // 网站Logo
+  logoAltText           String?          @db.VarChar(150) // Logo替代文本
+  logoWidth             Decimal?         @db.Decimal(10, 2) // Logo宽度
+  logoHeight            Decimal?         @db.Decimal(10, 2) // Logo高度
+  welcomeText           String?          @db.VarChar(255) // 欢迎文本
+  copyright             String?          @db.VarChar(255) // 版权信息
+  robots                String?          @db.VarChar(120)
+  cmsHomePageId         BigInt?          @unique // CMS首页页面ID
+  cmsHomePage           CmsPage?         @relation(fields: [cmsHomePageId], references: [id])
+  store                 Store?
+  @@map("store_theme")
+}
+
+model Category {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  name                  String           @db.VarChar(150)
+  image                 String?          @db.VarChar(255)
+  description           String?          @db.Text
+  level                 Int              @db.Integer @default(1)
+  urlKey                String           @unique @db.VarChar(150)// 用于URL的友好标识
+  disabled              Boolean          @default(false)
+  includeMenu           Boolean          @default(true)
+  metaTitle             String?          @db.VarChar(150)
+  metaKeywords          String?          @db.VarChar(200)
+  metaDescription       String?          @db.VarChar(255)
+  defaultSort           String?          @db.VarChar(50) // 默认排序方式
+  parentId              BigInt?
+  parent                Category?        @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children              Category[]       @relation("CategoryHierarchy")
+  cmsBlockId            BigInt?
+  cmsBlock              CmsBlock?        @relation(fields: [cmsBlockId], references: [id])
+  store                 Store?
+  products              Product[]
+  @@index([urlKey])
+  @@map("category")
+}
+
+model Product {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  name                  String           @db.VarChar(150)
+  urlKey                String           @db.VarChar(150) // 用于URL的友好标识
+  sku                   String           @unique @db.VarChar(150)
+  price                 Decimal          @db.Decimal(10, 2) // 商品价格
+  specialPrice          Decimal?         @db.Decimal(10, 2) // 特价商品价格
+  specialStartDate      DateTime?        @db.Timestamptz(6) // 特价开始时间
+  specialEndDate        DateTime?        @db.Timestamptz(6) // 特价结束时间
+  quantity              Int              @default(0) // 库存数量
+  stockStatus           StockStatus      @default(IN_STOCK) // 库存状态
+  disabled              Boolean          @default(false)
+  weight                Decimal?         @db.Decimal(10, 2) // 商品重量
+  shortDescription      String?          @db.VarChar(255) // 简短描述
+  description           String?          @db.Text
+  categoryId            BigInt           // 所属分类ID
+  category              Category?        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  metaTitle             String?          @db.VarChar(150)
+  metaKeywords          String?          @db.VarChar(200)
+  metaDescription       String?          @db.VarChar(255)
+  images                ProductImage[]
+  videos                ProductVideo[]
+  // 相关产品关系
+  relatedProducts       Product[]        @relation("RelatedProducts")
+  relatedTo             Product[]        @relation("RelatedProducts")
+  // 向上销售产品关系
+  upSellsProducts       Product[]        @relation("UpSellsProducts")
+  upSellsBy             Product[]        @relation("UpSellsProducts")
+  // 交叉销售产品关系
+  crossSellsProducts    Product[]        @relation("CrossSellsProducts")
+  crossSellsBy          Product[]        @relation("CrossSellsProducts")
+  @@index([sku])
+  @@index([name])
+  @@index([urlKey])
+  @@index([categoryId])
+  @@map("product")
+}
+
+model ProductImage {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  disabled              Boolean          @default(false)
+  url                   String           @unique @db.VarChar(255)
+  altText               String?          @db.VarChar(150)
+  imageRole             ProductImageRole @default(BASE) // 图片角色
+  imageSize             Decimal?         @db.Decimal(10, 2)
+  imageResolution       String?          @db.VarChar(50)                       
+  sortOrder             Int?
+  productId             BigInt
+  product               Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@index([productId])
+  @@map("product_image")
+}
+
+model ProductVideo {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  disabled              Boolean          @default(false)
+  url                   String           @unique @db.VarChar(255) // 视频URL
+  title                 String           @db.VarChar(150)       
+  description           String?          @db.Text
+  thumbnail             String?          @db.VarChar(150) // 视频缩略图
+  productId             BigInt
+  product               Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@index([productId])
+  @@map("product_video")
+}
+
+model Slider {
+  id                    BigInt             @id @default(autoincrement())
+  createdAt             DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  title                 String             @db.VarChar(150)
+  identifier            String             @unique @db.VarChar(150)
+  disabled              Boolean            @db.Boolean @default(false)
+  banners               Banner[]
+  storeId               BigInt?            @unique
+  store                 Store?             @relation(fields: [storeId], references: [id])
+  @@index([identifier])
+  @@map("slider")
+}
+
+model Banner {
+  id                    BigInt             @id @default(autoincrement())
+  createdAt             DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  disabled              Boolean            @db.Boolean @default(false)
+  url                   String             @unique @db.VarChar(150)
+  image                 String             @db.VarChar(255)
+  description           String?            @db.Text
+  target                TargetType?        @default(self)
+  startDate             DateTime           @db.Timestamptz(6)
+  endDate               DateTime           @db.Timestamptz(6)
+  sliderId              BigInt?
+  slider                Slider?            @relation(fields: [sliderId], references: [id])
+  @@index([url])
+  @@map("banner")
+}
+
+model CmsPage {
+  id                    BigInt             @id @default(autoincrement())
+  createdAt             DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  urlKey                String             @unique @db.VarChar(150)
+  title                 String             @db.VarChar(150)
+  disabled              Boolean            @db.Boolean @default(false)
+  content               String?            @db.Text
+  metaTitle             String?            @db.VarChar(150)
+  metaKeywords          String?            @db.VarChar(200)
+  metaDescription       String?            @db.VarChar(255)
+  storeId               BigInt?            @unique
+  store                 Store?             @relation(fields: [storeId], references: [id])
+  storeTheme            StoreTheme?      
+  cmsBlocks             CmsBlock[]
+  @@index([urlKey])
+  @@map("cms_page")
+}
+
+model CmsBlock {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  disabled              Boolean          @db.Boolean @default(false)
+  title                 String             @db.VarChar(150)
+  urlKey                String           @unique @db.VarChar(150)
+  content               String?          @db.Text
+  cmsPageId             BigInt?
+  cmsPage               CmsPage?         @relation(fields: [cmsPageId], references: [id])
+  categories            Category[]
+  @@index([urlKey])
+  @@map("cms_block")
+}
+
+model User {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  name                  String           @db.VarChar(150)
+  email                 String           @db.VarChar(254)
+  password              String?          @db.VarChar(150)
+  telephone             String           @db.VarChar(120)
+  lastLoginAt           DateTime?        @db.Timestamptz(6)
+  disabled              Boolean          @db.Boolean @default(false)
+  subscribed            Boolean?         @db.Boolean @default(true)
+  discription           String?          @db.Text
+  @@index([email])
+  @@unique([email])
+  @@map("user")
+}
+
+model Admin {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  name                  String           @db.VarChar(150)
+  email                 String           @unique @db.VarChar(254)
+  password              String           @db.VarChar(150)
+  telephone             String           @db.VarChar(120)
+  role                  AdminRole        @default(OPERATION)
+  disabled              Boolean          @db.Boolean @default(false)
+  lastLoginAt           DateTime?        @db.Timestamptz(6)
+  systemLogs            SystemLog[]
+  @@index([email])
+  @@map("admin")
+}
 
 model ApiLogger {
   id                    BigInt           @id @default(autoincrement())
@@ -125,117 +416,4 @@ model SystemLog {
   adminId               BigInt?
   admin                 Admin?           @relation(fields: [adminId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   @@map("system_log")
-}
-
-model Admin {
-  id                    BigInt           @id @default(autoincrement())
-  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
-  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
-  name                  String           @db.VarChar(150)
-  email                 String           @unique @db.VarChar(254)
-  password              String           @db.VarChar(150)
-  telephone             String           @db.VarChar(120)
-  role                  AdminRole        @default(OPERATION)
-  disabled              Boolean          @db.Boolean @default(false)
-  lastLoginAt           DateTime?        @db.Timestamptz(6)
-  systemLogs            SystemLog[]
-  @@index([email])
-  @@map("admin")
-}
-
-model User {
-  id                    BigInt           @id @default(autoincrement())
-  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
-  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
-  name                  String           @db.VarChar(150)
-  email                 String           @db.VarChar(254)
-  password              String?          @db.VarChar(150)
-  telephone             String           @db.VarChar(120)
-  lastLoginAt           DateTime?        @db.Timestamptz(6)
-  disabled              Boolean          @db.Boolean @default(false)
-  removed               Boolean          @db.Boolean @default(false)
-  subscribed            Boolean?         @db.Boolean @default(true)
-  discription           String?          @db.Text
-  @@index([email, telephone])
-  @@unique([email, telephone])
-  @@map("user")
-}
-
-model Region {
-  id                    BigInt           @id @default(autoincrement())
-  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
-  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
-  code                  String           @unique @db.VarChar(55)
-  name                  String           @db.VarChar(150)
-  level                 Int              @db.Integer // 1-省 2-市 3-县区
-  disabled              Boolean          @db.Boolean @default(false)
-  parentId              BigInt?          @db.BigInt
-  parent                Region?          @relation("RegionToRegion", fields: [parentId], references: [id])
-  children              Region[]         @relation("RegionToRegion") 
-  @@map("region")
-}
-
-model UrlKey {
-  id                    BigInt           @id @default(autoincrement())
-  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
-  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
-  url                   String           @unique @db.VarChar(150)
-  disabled              Boolean          @default(false)
-  type                  UrlKeyType       @default(PRODUCT) // URL类型
-  typeId                BigInt           // 关联的ID
-  redirectUrl           String?          @db.VarChar(150) // 重定向的URL
-  redirectType          RedirectType?          
-  @@index([url])
-  @@unique([type, typeId])
-  @@map("url_key")
-}
-
-model Category {
-  id                    BigInt           @id @default(autoincrement())
-  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
-  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
-  name                  String           @db.VarChar(150)
-  image                 String?          @db.VarChar(255)
-  description           String?          @db.Text
-  level                 Int              @db.Integer @default(1)
-  urlKey                String           @unique @db.VarChar(150)// 用于URL的友好标识
-  disabled              Boolean          @default(false)
-  metaTitle             String?          @db.VarChar(150)
-  metaKeywords          String?          @db.VarChar(200)
-  metaDescription       String?          @db.VarChar(255)
-  parentId              BigInt?
-  parent                Category?        @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children              Category[]       @relation("CategoryHierarchy")
-  @@index([urlKey])
-  @@map("category")
-}
-
-model Banner {
-  id                  BigInt             @id @default(autoincrement())
-  createdAt           DateTime           @default(now()) @db.Timestamptz(6)
-  updatedAt           DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
-  disabled            Boolean            @db.Boolean @default(false)
-  url                 String             @unique @db.VarChar(150)
-  image               String             @db.VarChar(255)
-  description         String?            @db.Text
-  target              TargetType?        @default(self)
-  startDate           DateTime           @db.Timestamptz(6)
-  endDate             DateTime           @db.Timestamptz(6)
-  @@index([url])
-  @@map("banner")
-}
-
-model CmsPage {
-  id                  BigInt             @id @default(autoincrement())
-  createdAt           DateTime           @default(now()) @db.Timestamptz(6)
-  updatedAt           DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
-  disabled            Boolean            @db.Boolean @default(false)
-  url                 String             @unique @db.VarChar(150)
-  title               String             @db.VarChar(150)
-  description         String?            @db.Text
-  metaTitle           String?            @db.VarChar(150)
-  metaKeywords        String?            @db.VarChar(200)
-  metaDescription     String?            @db.VarChar(255)
-  @@index([url])
-  @@map("cms_page")
 }

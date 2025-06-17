@@ -110,9 +110,9 @@ pnpm -v
 
 ## How to make local docker
 
-docker-compose -f blogs/docker-compose-local.yaml up -d --build
-docker-compose -f blogs/docker-compose.yaml up -d --build
-docker-compose -f frontend/docker-compose.yaml up -d --build
+docker-compose -f mall/docker-compose-local.yaml up -d --build
+docker-compose -f mall/docker-compose.yaml up -d --build
+docker-compose -f storefront/docker-compose.yaml up -d --build
 
 ## Docker create network
 
