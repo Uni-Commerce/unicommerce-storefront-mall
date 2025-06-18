@@ -274,6 +274,7 @@ model Product {
   cartItems             CartItem[]
   reviews               ProductReview[]
   orderItems            OrderItem[]
+  compareItems          CompareItem[]
   wishlist              WishlistItem[]
   shipmentItems         ShipmentItem[]
   @@index([sku])
@@ -336,11 +337,27 @@ model Cart {
   id                    BigInt            @id @default(autoincrement())
   createdAt             DateTime          @default(now()) @db.Timestamptz(6)
   updatedAt             DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
-  couponCode            String?
+  entityId              String            @unique @db.VarChar(150) // 购物车实体ID
+  couponCode            String[]
+  subtotal              Decimal           @db.Decimal(10, 2)
+  discount              Decimal?          @db.Decimal(10, 2)
+  taxCount              Decimal?          @db.Decimal(10, 2)
+  grandTotal            Decimal           @db.Decimal(10, 2)
   sessionId             String?
-  customerId            BigInt?
+  customerId            BigInt?           // 关联的客户ID          
   customer              Customer?         @relation(fields: [customerId], references: [id])
   items                 CartItem[]
+  shippingAddressId     BigInt?
+  shippingAddress       Address?          @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddressId      BigInt?
+  billingAddress        Address?          @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  shippingMethodId      BigInt?
+  shippingMethod        ShippingMethod?   @relation(fields: [shippingMethodId], references: [id])
+  paymentMethodId       BigInt?
+  paymentMethod         PaymentMethod?    @relation(fields: [paymentMethodId], references: [id])
+  @@index([customerId])
+  @@index([shippingAddressId])
+  @@index([billingAddressId])
   @@map("cart")
 }
 
@@ -421,8 +438,9 @@ model PaymentMethod {
   updatedAt             DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
   code                  String             @unique
   title                 String
-  isActive              Boolean            @default(true)
+  disabled              Boolean            @default(true)
   config                Json?
+  carts                 Cart[]
   @@map("payment_method")
 }
 
@@ -430,13 +448,13 @@ model ShippingMethod {
   id                    BigInt             @id @default(autoincrement())
   createdAt             DateTime           @default(now()) @db.Timestamptz(6)
   updatedAt             DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
-  code                  String             @unique
-  title                 String
-  isActive              Boolean            @default(true)
+  code                  String             @unique @db.VarChar(100)
+  title                 String             @db.VarChar(100)
+  disabled              Boolean            @default(true)
   price                 Decimal            @db.Decimal(10, 2) @default(0)
-  minOrderAmount        Decimal?          @db.Decimal(10, 2)
-  maxOrderAmount        Decimal?          @db.Decimal(10, 2)
+  description           String?            @db.Text
   config                Json?
+  carts                 Cart[]
   @@map("shipping_method")
 }
 
@@ -517,6 +535,29 @@ model Coupon {
   @@map("coupon")
 }
 
+model Compare {
+  id                    BigInt              @id @default(autoincrement())
+  createdAt             DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime            @default(now()) @updatedAt @db.Timestamptz(6)
+  name                  String              @db.VarChar(150)
+  description           String?             @db.Text
+  customerId            BigInt              @unique
+  customer              Customer            @relation(fields: [customerId], references: [id])
+  items                 CompareItem[]
+  @@map("compare")
+}
+
+model CompareItem {
+  id                    BigInt              @id @default(autoincrement())
+  createdAt             DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime            @default(now()) @updatedAt @db.Timestamptz(6)
+  compareId             BigInt?
+  compare               Compare?            @relation(fields: [compareId], references: [id])
+  productId             BigInt
+  product               Product             @relation(fields: [productId], references: [id])
+  @@map("compare_item")
+}
+
 model Address {
   id                    BigInt             @id @default(autoincrement())
   createdAt             DateTime           @default(now()) @db.Timestamptz(6)
@@ -536,6 +577,8 @@ model Address {
   customer              Customer?          @relation(fields: [customerId], references: [id])
   shippingOrders        Order[]            @relation("OrderShippingAddress")
   billingOrders         Order[]            @relation("OrderBillingAddress")
+  shippingCarts         Cart[]             @relation("ShippingAddress")
+  billingCarts          Cart[]             @relation("BillingAddress")
   @@index([customerId])
   @@map("address")
 }
@@ -635,7 +678,8 @@ model Customer {
   birthday              DateTime?        @db.Timestamptz(6)
   lastLoginAt           DateTime?        @db.Timestamptz(6)
   discription           String?          @db.Text
-  cart                  Cart[]
+  carts                 Cart[]
+  compare               Compare?
   addresses             Address[]
   orders                Order[]
   reviews               ProductReview[]
