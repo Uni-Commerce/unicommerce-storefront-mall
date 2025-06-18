@@ -78,6 +78,27 @@ enum Gender {
   FEMALE
 }
 
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETE
+  CANCELLED
+  CLOSED
+  ON_HOLD
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
 model Region {
   id                    BigInt           @id @default(autoincrement())
   createdAt             DateTime         @default(now()) @db.Timestamptz(6)
@@ -250,6 +271,11 @@ model Product {
   // 交叉销售产品关系
   crossSellsProducts    Product[]        @relation("CrossSellsProducts")
   crossSellsBy          Product[]        @relation("CrossSellsProducts")
+  cartItems             CartItem[]
+  reviews               ProductReview[]
+  orderItems            OrderItem[]
+  wishlist              WishlistItem[]
+  shipmentItems         ShipmentItem[]
   @@index([sku])
   @@index([name])
   @@index([urlKey])
@@ -287,6 +313,231 @@ model ProductVideo {
   product               Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   @@index([productId])
   @@map("product_video")
+}
+
+model ProductReview {
+  id                    BigInt           @id @default(autoincrement())
+  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+  rating                Decimal          @default(0.00) @db.Decimal(3, 2) // 总位数3，小数位2
+  name                  String
+  title                 String
+  detail                String?
+  isApproved            Boolean           @default(false)
+  productId             BigInt
+  product               Product           @relation(fields: [productId], references: [id])
+  customerId            BigInt
+  customer              Customer          @relation(fields: [customerId], references: [id])
+  @@unique([productId, customerId])
+  @@map("product_review")
+}
+
+model Cart {
+  id                    BigInt            @id @default(autoincrement())
+  createdAt             DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
+  couponCode            String?
+  sessionId             String?
+  customerId            BigInt?
+  customer              Customer?         @relation(fields: [customerId], references: [id])
+  items                 CartItem[]
+  @@map("cart")
+}
+
+model CartItem {
+  id                    BigInt            @id @default(autoincrement())
+  createdAt             DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
+  qty                   Int               @default(1)
+  price                 Decimal           @db.Decimal(10, 2)
+  specialPrice          Decimal?          @db.Decimal(10, 2)
+  discountAmount        Decimal           @db.Decimal(10, 2) @default(0)
+  rowTotal              Decimal           @db.Decimal(10, 2)
+  cartId                BigInt
+  cart                  Cart              @relation(fields: [cartId], references: [id])
+  productId             BigInt
+  product               Product           @relation(fields: [productId], references: [id])
+  @@map("cart_item")
+}
+
+model Order {
+  id                    BigInt             @id @default(autoincrement())
+  createdAt             DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  incrementId           String             @unique @db.VarChar(150) 
+  subtotal              Decimal            @db.Decimal(10, 2) @default(0)
+  discountAmount        Decimal            @db.Decimal(10, 2) @default(0)
+  taxAmount             Decimal            @db.Decimal(10, 2) @default(0)
+  shippingAmount        Decimal            @db.Decimal(10, 2) @default(0)
+  grandTotal            Decimal            @db.Decimal(10, 2) @default(0)
+  paymentMethod         String             @db.VarChar(150)
+  shippingMethod        String             @db.VarChar(150)
+  couponCode            String?            @db.VarChar(150)
+  status                OrderStatus        @default(PENDING)
+  customerId            BigInt?
+  customer              Customer?          @relation(fields: [customerId], references: [id])
+  shippingAddressId     BigInt
+  shippingAddress       Address            @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddressId      BigInt
+  billingAddress        Address            @relation("OrderBillingAddress",fields: [billingAddressId], references: [id])
+  orderItems            OrderItem[]
+  orderHistories        OrderHistory[]
+  payment               Payment?
+  shipment              Shipment?
+  @@map("order")
+}
+
+model OrderItem {
+  id                    BigInt             @id @default(autoincrement())
+  createdAt             DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  qty                   Int                @default(1)
+  price                 Decimal            @db.Decimal(10, 2) @default(0)
+  discountAmount        Decimal            @db.Decimal(10, 2) @default(0)
+  rowTotal              Decimal            @db.Decimal(10, 2) @default(0)
+  orderId               BigInt
+  order                 Order              @relation(fields: [orderId], references: [id])
+  productId             BigInt
+  product               Product            @relation(fields: [productId], references: [id])
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_item")
+}
+
+model OrderHistory {
+  id                    BigInt             @id @default(autoincrement())
+  createdAt             DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  status                OrderStatus        @default(PENDING)
+  comment               String?            @db.Text
+  orderId               BigInt
+  order                 Order              @relation(fields: [orderId], references: [id])
+  @@map("order_history")
+}
+
+model PaymentMethod {
+  id                    BigInt             @id @default(autoincrement())
+  createdAt             DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  code                  String             @unique
+  title                 String
+  isActive              Boolean            @default(true)
+  config                Json?
+  @@map("payment_method")
+}
+
+model ShippingMethod {
+  id                    BigInt             @id @default(autoincrement())
+  createdAt             DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  code                  String             @unique
+  title                 String
+  isActive              Boolean            @default(true)
+  price                 Decimal            @db.Decimal(10, 2) @default(0)
+  minOrderAmount        Decimal?          @db.Decimal(10, 2)
+  maxOrderAmount        Decimal?          @db.Decimal(10, 2)
+  config                Json?
+  @@map("shipping_method")
+}
+
+model Payment {
+  id                    BigInt             @id @default(autoincrement())
+  createdAt             DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  method                String             @db.VarChar(150) // 支付方式 
+  amount                Decimal            @db.Decimal(10, 2) @default(0)
+  status                PaymentStatus      @default(PENDING)
+  transactionId         String?            @db.VarChar(150) // 交易ID
+  details               Json?
+  orderId               BigInt             @unique
+  order                 Order              @relation(fields: [orderId], references: [id])
+  @@index([orderId])
+  @@index([method])
+  @@map("payment")
+}
+
+model Shipment {
+  id                    BigInt             @id @default(autoincrement())
+  createdAt             DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  trackingNumber        String?            @db.VarChar(150) // 追踪号码
+  carrier               String?            @db.VarChar(150)
+  method                String?            @db.VarChar(150)
+  orderId               BigInt             @unique
+  order                 Order              @relation(fields: [orderId], references: [id])
+  items                 ShipmentItem[]
+  @@index([orderId])
+  @@map("shipment")
+}
+
+model ShipmentItem {
+  id                    BigInt             @id @default(autoincrement())
+  createdAt             DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime            @default(now()) @updatedAt @db.Timestamptz(6)
+  qty                   Int                 @default(1)
+  shipmentId            BigInt
+  shipment              Shipment            @relation(fields: [shipmentId], references: [id])
+  productId             BigInt              
+  product               Product             @relation(fields: [productId], references: [id])
+  @@map("shipment_item")
+}
+
+model Promotion {
+  id                    BigInt              @id @default(autoincrement())
+  createdAt             DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime            @default(now()) @updatedAt @db.Timestamptz(6)
+  name                  String              @db.VarChar(150)
+  description           String?             @db.Text  
+  startDate             DateTime?           @db.Timestamptz(6)
+  endDate               DateTime?           @db.Timestamptz(6)   
+  disabled              Boolean             @default(false)
+  priority              Int                 @default(0)
+  stopRulesProcessing   Boolean             @default(false)
+  conditions            Json?               @default("{}") // 促销条件
+  actions               Json?               @default("{}") // 促销动作
+  coupons               Coupon[]
+  @@map("promotion")
+}
+
+model Coupon {
+  id                    BigInt              @id @default(autoincrement())
+  createdAt             DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime            @default(now()) @updatedAt @db.Timestamptz(6)
+  code                  String              @unique @db.VarChar(150) // 优惠码
+  usageLimit            Int?                @default(0) // 使用限制 
+  timesUsed             Int                 @default(0)
+  isActive              Boolean             @default(true)
+  startDate             DateTime?           @db.Timestamptz(6)
+  endDate               DateTime?           @db.Timestamptz(6) 
+  discountAmount        Decimal?            @db.Decimal(10, 2) // 折扣金额
+  discountType          DiscountType?       @default(PERCENT) // 折扣类型
+  minOrderAmount        Decimal?            @db.Decimal(10, 2)
+  promotionId           BigInt?
+  promotion             Promotion?          @relation(fields: [promotionId], references: [id])
+  @@map("coupon")
+}
+
+model Address {
+  id                    BigInt             @id @default(autoincrement())
+  createdAt             DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  firstName             String             @db.VarChar(100)
+  lastName              String             @db.VarChar(100)
+  street                String[]           @db.Text
+  city                  String?            @db.VarChar(150)
+  region                String?            @db.VarChar(50)
+  regionCode            String?            @db.VarChar(150)
+  postcode              String             @db.VarChar(150)
+  countryCode           String             @db.VarChar(50)
+  telephone             String             @db.VarChar(150)
+  isDefaultBilling      Boolean?           @default(false)
+  isDefaultShipping     Boolean?           @default(false)
+  customerId            BigInt?
+  customer              Customer?          @relation(fields: [customerId], references: [id])
+  shippingOrders        Order[]            @relation("OrderShippingAddress")
+  billingOrders         Order[]            @relation("OrderBillingAddress")
+  @@index([customerId])
+  @@map("address")
 }
 
 model Slider {
@@ -339,24 +590,36 @@ model CmsPage {
   @@map("cms_page")
 }
 
+model WishlistItem {
+  id                    BigInt            @id @default(autoincrement())
+  createdAt             DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
+  quantity              Int               @default(1)
+  customerId            BigInt
+  customer              Customer          @relation(fields: [customerId], references: [id])
+  productId             BigInt
+  product               Product           @relation(fields: [productId], references: [id])
+  @@map("wishlist_item")
+}
+
 model CmsBlock {
-  id                    BigInt           @id @default(autoincrement())
-  createdAt             DateTime         @default(now()) @db.Timestamptz(6)
-  updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
-  disabled              Boolean          @db.Boolean @default(false)
-  title                 String             @db.VarChar(150)
-  urlKey                String           @unique @db.VarChar(150)
-  content               String?          @db.Text
+  id                    BigInt            @id @default(autoincrement())
+  createdAt             DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
+  disabled              Boolean           @db.Boolean @default(false)
+  title                 String            @db.VarChar(150)
+  urlKey                String            @unique @db.VarChar(150)
+  content               String?           @db.Text
   cmsPageId             BigInt?
-  cmsPage               CmsPage?         @relation(fields: [cmsPageId], references: [id])
-  storeId               BigInt?            @unique
-  store                 Store?             @relation(fields: [storeId], references: [id])
+  cmsPage               CmsPage?          @relation(fields: [cmsPageId], references: [id])
+  storeId               BigInt?           @unique
+  store                 Store?            @relation(fields: [storeId], references: [id])
   categories            Category[]
   @@index([urlKey])
   @@map("cms_block")
 }
 
-model User {
+model Customer {
   id                    BigInt           @id @default(autoincrement())
   createdAt             DateTime         @default(now()) @db.Timestamptz(6)
   updatedAt             DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
@@ -372,6 +635,11 @@ model User {
   birthday              DateTime?        @db.Timestamptz(6)
   lastLoginAt           DateTime?        @db.Timestamptz(6)
   discription           String?          @db.Text
+  cart                  Cart[]
+  addresses             Address[]
+  orders                Order[]
+  reviews               ProductReview[]
+  wishlist              WishlistItem[]
   @@index([email])
   @@unique([email])
   @@map("user")
