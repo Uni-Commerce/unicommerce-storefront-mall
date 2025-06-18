@@ -387,8 +387,6 @@ model Order {
   taxAmount             Decimal            @db.Decimal(10, 2) @default(0)
   shippingAmount        Decimal            @db.Decimal(10, 2) @default(0)
   grandTotal            Decimal            @db.Decimal(10, 2) @default(0)
-  paymentMethod         String             @db.VarChar(150)
-  shippingMethod        String             @db.VarChar(150)
   couponCode            String?            @db.VarChar(150)
   status                OrderStatus        @default(PENDING)
   customerId            BigInt?
@@ -397,6 +395,10 @@ model Order {
   shippingAddress       Address            @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id])
   billingAddressId      BigInt
   billingAddress        Address            @relation("OrderBillingAddress",fields: [billingAddressId], references: [id])
+  shippingMethodId      BigInt?
+  shippingMethod        ShippingMethod?   @relation(fields: [shippingMethodId], references: [id])
+  paymentMethodId       BigInt?
+  paymentMethod         PaymentMethod?    @relation(fields: [paymentMethodId], references: [id])
   orderItems            OrderItem[]
   orderHistories        OrderHistory[]
   payment               Payment?
@@ -441,6 +443,7 @@ model PaymentMethod {
   disabled              Boolean            @default(true)
   config                Json?
   carts                 Cart[]
+  orders                Order[]
   @@map("payment_method")
 }
 
@@ -455,6 +458,7 @@ model ShippingMethod {
   description           String?            @db.Text
   config                Json?
   carts                 Cart[]
+  orders                Order[]
   @@map("shipping_method")
 }
 
